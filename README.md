@@ -1,4 +1,4 @@
-# Answer Engine
+# Source-Aware Answer Engine
 
 A Perplexity-style search tool: ask a question, get a synthesized answer with
 inline citations — not a list of links to sift through. Every claim traces back to
