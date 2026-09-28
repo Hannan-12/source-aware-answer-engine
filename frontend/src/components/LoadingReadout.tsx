@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 // The case log: the pipeline's real steps, written out in real time like a
 // clerk building the file — not a generic spinner. Respects reduced-motion by
@@ -12,23 +12,21 @@ const STEPS = [
 ];
 
 export default function LoadingReadout({ query }: { query: string }) {
-  const [step, setStep] = useState(0);
-  const reduced = useRef(false);
+  const [reduced] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  const [step, setStep] = useState(() => (reduced ? STEPS.length - 1 : 0));
 
   useEffect(() => {
-    reduced.current =
-      typeof window !== "undefined" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced.current) {
-      setStep(STEPS.length - 1);
-      return;
-    }
+    if (reduced) return;
     const timers = [
       setTimeout(() => setStep(1), 1200),
       setTimeout(() => setStep(2), 2700),
     ];
     return () => timers.forEach(clearTimeout);
-  }, []);
+  }, [reduced]);
 
   return (
     <div
@@ -38,8 +36,8 @@ export default function LoadingReadout({ query }: { query: string }) {
       aria-label={`Opening case: ${query}`}
     >
       {STEPS.map((label, i) => {
-        const visible = reduced.current || i <= step;
-        const active = !reduced.current && i === step;
+        const visible = reduced || i <= step;
+        const active = !reduced && i === step;
         if (!visible) return null;
         return (
           <div

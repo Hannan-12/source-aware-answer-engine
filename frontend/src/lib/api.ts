@@ -1,9 +1,11 @@
 import type { SearchResponse } from "./types";
 
-// Base URL of the FastAPI backend. Override in production via
-// NEXT_PUBLIC_API_URL (e.g. the deployed API's address).
+// Base URL of the FastAPI backend. Prefer NEXT_PUBLIC_API_BASE_URL while
+// retaining NEXT_PUBLIC_API_URL as a compatibility alias for older setups.
 const API_URL =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ?? "http://localhost:8000";
+  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
+  "http://localhost:8000";
 
 export class ApiError extends Error {}
 

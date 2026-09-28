@@ -1,6 +1,19 @@
 .env
+.env.*
+!.env.example
 __pycache__/
 *.py[cod]
+*.pyc
 .venv/
 venv/
 .DS_Store
+node_modules/
+.next/
+dist/
+*.log
+
+# editor / OS noise
+.idea/
+.vscode/
+*.swp
+*.swo

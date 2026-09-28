@@ -62,7 +62,7 @@ export default function Home() {
 
   const busy = state.status === "loading";
   const showResults = state.status === "done";
-  const stamp = useMemo(() => new Date().toISOString().slice(0, 16).replace("T", " "), [seq]);
+  const stamp = useMemo(() => new Date().toISOString().slice(0, 16).replace("T", " "), []);
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-5 sm:px-8">

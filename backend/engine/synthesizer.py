@@ -12,8 +12,13 @@ import os
 
 from .errors import MissingAPIKeyError, SynthesisError
 
-MODEL = "llama-3.3-70b-versatile"
+DEFAULT_MODEL = "llama-3.3-70b-versatile"
 TIMEOUT_SECONDS = 30.0
+
+
+def get_model_name() -> str:
+    """Return the configured Groq model, defaulting to a supported value."""
+    return os.getenv("GROQ_MODEL", DEFAULT_MODEL)
 
 SYSTEM_PROMPT = (
     "You are a search assistant. Answer the user's question using ONLY the "

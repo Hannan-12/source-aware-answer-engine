@@ -29,12 +29,15 @@ from engine.errors import MissingAPIKeyError, SearchEngineError
 from engine.retriever import search_web
 from engine.synthesizer import synthesize_structured
 
-# Load .env so the engine can read TAVILY_API_KEY / GROQ_API_KEY.
+# Load .env so the engine can read the required provider keys and config.
 load_dotenv()
 
 # Rate limiter keyed by client IP. This protects the free-tier Tavily/Groq
 # quota from being drained by bots once the API is public. In-memory by
 # default, which is fine for a single-instance deploy.
+DEFAULT_LIMIT = os.getenv("RATE_LIMIT_REQUESTS", "10")
+DEFAULT_WINDOW = os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")
+LIMIT_STRING = f"{DEFAULT_LIMIT}/{DEFAULT_WINDOW}seconds"
 limiter = Limiter(key_func=get_remote_address)
 
 app = FastAPI(
@@ -56,18 +59,26 @@ def rate_limit_handler(request: Request, exc: RateLimitExceeded):
         },
     )
 
-# Allow the frontend to call this API from the browser. Origins come from the
-# ALLOWED_ORIGINS env var (comma-separated) so the deployed Vercel URL can be
-# added without a code change; falls back to localhost for local development.
-_origins_env = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000")
-ALLOWED_ORIGINS = [o.strip() for o in _origins_env.split(",") if o.strip()]
-
+# Allow the frontend to call this API from the browser. Prefer the canonical
+# FRONTEND_ORIGIN env var, but retain ALLOWED_ORIGINS for compatibility with the
+# earlier local setup. Falls back to localhost for local development.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def _origin_list() -> list[str]:
+    """Resolve the allowed frontend origins from the current env values."""
+    raw = os.getenv("FRONTEND_ORIGIN") or os.getenv("ALLOWED_ORIGINS")
+    if raw:
+        return [o.strip() for o in raw.split(",") if o.strip()]
+    return ["http://localhost:3000"]
+
+
+ALLOWED_ORIGINS = _origin_list()
 
 
 class SearchRequest(BaseModel):
@@ -100,7 +111,7 @@ def health() -> dict:
 
 
 @app.post("/search", response_model=SearchResponse)
-@limiter.limit("10/minute")
+@limiter.limit(LIMIT_STRING)
 def search(request: Request, payload: SearchRequest) -> SearchResponse:
     """Retrieve sources for the query and return a synthesized cited answer."""
     try:
